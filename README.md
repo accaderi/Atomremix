@@ -16,6 +16,7 @@
 
 <div style="text-align:center">
 <p>Video: <a href="https://youtu.be/Xc2SA4VOqKU?si=xd5agQ-wLdQ8Wfyl">https://youtu.be/Xc2SA4VOqKU?si=xd5agQ-wLdQ8Wfyl</a></p>
+<p>Android App: <a href="https://play.google.com/store/apps/details?id=com.accaderi.Atomremix&pcampaignid=web_share">https://play.google.com/store/apps/details?id=com.accaderi.Atomremix&pcampaignid=web_share</a></p> 
 </div>
 
 >Atomix is a classic puzzle video game that was originally developed and released in 1990 for the Amiga computer. The game was created by Thalion Software and designed by Günter Krämer.
@@ -530,6 +531,8 @@ Electric Shock object, handling Electric Shock and smoke as child objects.
 **Collision Handler for Level 6, 7** (collision_handler level 6_7) [Collision Detector]  
 ![Collision Handler for Level 6, 7 jpg](Screenshots/V_script_sshots/Collision_handler_level_6_7.jpg)
 Modifications from the standard collision handler script are as follows:  
+The game objects 'Electric Shock' and 'Smoke' are children of the 'Atoms' object, positioned just before the 'Force Field' objects in the list. This arrangement ensures that they are covered by the force field when the level completion animation is played. Consequently, the loop responsible for checking atom completion needs to subtract these two elements from the total count.  
+
 On Trigger Enter:  
 Before the distance check in Item 7., include the following:
 
@@ -545,8 +548,13 @@ On Update:
 
 2. If the level is not completed, it plays the electric shock SFX every 20 seconds, darkens the smoke color, and increases its scale. The script waits for 1.5 seconds with the 'play shock' Scene variable as False to prevent running the sequence every frame in the full 20th second, then turns 'play shock' back to True after the 20th second.
 
+In the final Android version, a simplified version of the above script was utilized due to the smoke particle system's color change not functioning correctly on Android devices, despite working fine in the Unity editor.  
+
+The simplified script:
+![Electric Shock Simple jpg](Screenshots/V_script_sshots/electric_shock_simple.jpg)
+
 #### **Level 7 - 8**  
-Normal middle levels.
+Normal middle levels with the exception of being able to use the collision handler script from level 6 on level 7, two dummy objects are introduced under the 'Atoms' object to ensure that the 'Atoms' game object has the same number of children objects.
 
 #### ** Level 9**
 This level is a special dark Level.  
@@ -609,18 +617,24 @@ A distinctive aspect of this level is the periodic reversal of atom control ever
 When assigning velocity to the clicked atom, the script utilizes the 'movements' Application variable to obtain the current value.
 
 **Reversing the Movement** (movement_reversing) [Walls]  
-![Reversing Movement jpg](Screenshots/V_script_sshots/movement_reversing.jpg)
+![Reversing Movement jpg](Screenshots/V_script_sshots/movement_reversing.jpg)  
+
+Remarks:
+The original working script has been altered due to the special operational rules of Android. When returning to the level from the settings menu on Android, the On Update script runs regardless of whether the time check at the beginning is True or False.
+To address this issue, a 'Reverse Movement' application variable is used to ensure that the On Update script does not run unless the 30-second time check is True.   
 On Start:
 
 1. At the beginning of the level, normal movement is established.
 2. The central glowing green wall is activated.
 3. If the level is resumed (not starting from scratch), it checks the active movement by comparing the 'movements' Application variable to the vector (-6, 0, 0). It then adjusts the glowing walls accordingly using a toggle flow module.
+4. If the 'Remaining Time' Application variable is at a 30 sec mark waits 1.5 sec and set the variable to True, in order to avoid the On Update method to change the atom movement due to the 30-second check True state.
+5. Else it waits one frame to avoid the android version of the game to change the atom movement for the reaseon described in the remarks.
 
 On Update:
 
-4. If the level is not completed, every 30 seconds, the script reverses the movement velocities stored in the 'Movements' Application variable. Index 0 and 1 correspond to x velocities, while indexes above 1 represent z velocities.
-5. Adjusts the glowing wall based on the changed movement.
-6. Sets the 'Reverse Movement' Application variable to False and, after a 1.5-second delay to exceed the 30-second mark, sets it back to True.
+6. If the level is not completed and the 'reverse Movement' Application variable is True, every 30 seconds, the script reverses the movement velocities stored in the 'Movements' Application variable. Index 0 and 1 correspond to x velocities, while indexes above 1 represent z velocities.
+The 'Once' node is utilized to ensure that the script runs only once within the entire second, rather than executing every frame of the second. If the condition is False, the 'Once' node is reset.
+7. Adjusts the glowing wall based on the changed movement.
 
 #### **Level 12, 13**  
 Normal middle levels.
