@@ -950,7 +950,7 @@ Not all scripts in the app are detailed in the readme, such as additional collis
 Unzip the files to a folder, and open it as a project from Unity Hub.
 - Target SDK 36.
 - Speed improvements on level 5.
-- Code updated to Unity 6.1
+- Code updated to Unity 6.1 (Editor version: 6000.1.9f1)
 
 Old:  
 Unity Version: 2022.3.16f1
