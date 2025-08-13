@@ -947,10 +947,10 @@ Not all scripts in the app are detailed in the readme, such as additional collis
 # Installation Note
 
 **Update:**  
+Unzip the files to a folder, and open it as a project from Unity Hub.
 - Target SDK 36.
 - Speed improvements on level 5.
 - Code updated to Unity 6.1
 
 Old:  
-Just open the `atomremix_unity` folder as a project from Unity Hub.  
 Unity Version: 2022.3.16f1
