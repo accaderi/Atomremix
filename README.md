@@ -266,7 +266,257 @@ Loads the 'start' scene.
 
 #### Scripts:
 
-**HighscoreTable script**
+**HighscoreTable script (HighscoreTable.cs)**  
+```c#
+/* 
+Based on Code Monkey’s code, it has been extensively modified, optimized, reorganized, and enhanced with new functions.
+ */
+
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+
+public class HighscoreTable : MonoBehaviour {
+
+    public int score;
+    private new string name;
+    public int namePosition;
+    public bool nameRegistered;
+    private Transform entryContainer;
+    private Transform entryTemplate;
+    private List<Transform> highscoreEntryTransformList = new List<Transform>();
+    private Highscores highscores = new Highscores();
+    public TMP_InputField inputField;
+    public TextMeshProUGUI textScore;
+    public GameObject playerScoreTitle;
+
+    // private void Awake() {
+
+    //     CreateHighscore(score, name);
+
+    // }
+    public void CreateHighscore(bool nameEntered = false){
+        entryContainer = transform.Find("highscoreEntryContainer");
+        entryTemplate = entryContainer.Find("highscoreEntryTemplate");
+
+        entryTemplate.gameObject.SetActive(false);
+
+        string jsonString = PlayerPrefs.GetString("highscoreTable");
+        this.highscores = JsonUtility.FromJson<Highscores>(jsonString);
+
+        if (namePosition != 0 && nameEntered == true) {
+            this.highscores.highscoreEntryList.RemoveAt(namePosition - 1);
+            AddHighscoreEntry(score, name.ToUpper());
+        }
+
+        if (this.highscores == null) {
+
+            highscores = new Highscores() {
+                highscoreEntryList = new List<HighscoreEntry>()
+            };
+
+            // There's no stored table, initialize
+            Debug.Log("Initializing table with default values...");
+            AddHighscoreEntry(85000, "TOM");
+            AddHighscoreEntry(82500, "HRI");
+            AddHighscoreEntry(80000, "RPI");
+            AddHighscoreEntry(77500, "XTA");
+            AddHighscoreEntry(75000, "AKI");
+            AddHighscoreEntry(72500, "DTA");
+            AddHighscoreEntry(70000, "CCS");
+            AddHighscoreEntry(67500, "ACC");
+            AddHighscoreEntry(60000, "GST");
+            AddHighscoreEntry(55000, "LOW");
+        }
+       
+        if (this.highscores.highscoreEntryList[this.highscores.highscoreEntryList.Count - 1].score >= score && !nameEntered) {
+            SetTextScore();
+            nameRegistered = true;
+        }
+
+        if (this.highscores.highscoreEntryList[this.highscores.highscoreEntryList.Count - 1].score < score) {
+            // Do not show your score if score is on the highscore table
+            playerScoreTitle.gameObject.SetActive(false);
+            textScore.gameObject.SetActive(false);
+
+            this.highscores.highscoreEntryList.RemoveAt(this.highscores.highscoreEntryList.Count - 1);
+            AddHighscoreEntry(score, name);
+        }
+
+        // Sort entry list by Score
+        for (int i = 0; i < this.highscores.highscoreEntryList.Count; i++) {
+            for (int j = i + 1; j < this.highscores.highscoreEntryList.Count; j++) {
+                if (this.highscores.highscoreEntryList[j].score > this.highscores.highscoreEntryList[i].score) {
+                    // Swap
+                    HighscoreEntry tmp = this.highscores.highscoreEntryList[i];
+                    this.highscores.highscoreEntryList[i] = this.highscores.highscoreEntryList[j];
+                    this.highscores.highscoreEntryList[j] = tmp;
+                }
+            }
+        }
+        
+        string json = JsonUtility.ToJson(this.highscores);
+        PlayerPrefs.SetString("highscoreTable", json);
+        PlayerPrefs.Save();
+
+        if (highscoreEntryTransformList != null) {
+
+            foreach (Transform clone in highscoreEntryTransformList)
+            {
+                Destroy(clone.gameObject);
+            }
+
+            // Clear the list after destroying all clones
+            highscoreEntryTransformList.Clear();
+        }
+
+        foreach (HighscoreEntry highscoreEntry in highscores.highscoreEntryList) {
+            CreateHighscoreEntryTransform(highscoreEntry, entryContainer, score);
+        }
+        if (namePosition != 0 && string.IsNullOrWhiteSpace(name)) {
+
+            // InputFieldHandling(score);
+            RectTransform tmpRect = inputField.GetComponent<RectTransform>();
+            tmpRect.anchoredPosition = new Vector2(175, 109 -31f * (namePosition - 1));
+            inputField.text = "";
+            inputField.gameObject.SetActive(true);
+
+            // Set the focus to the inputfield
+            inputField.Select();
+            inputField.ActivateInputField();
+
+            inputField.onEndEdit.AddListener(OnInputSubmitted);
+            }
+
+    if (nameEntered == true) {
+        name = "";
+        nameRegistered = true;
+        namePosition = 0;
+        }
+
+    }
+
+    public void OnInputSubmitted(string inputText){
+
+                if (string.IsNullOrWhiteSpace(inputText)) {
+                    // inputText = "-";
+                    inputField.Select();
+                    inputField.ActivateInputField();
+
+                } else {
+                inputField.onEndEdit.RemoveListener(OnInputSubmitted);
+                inputField.gameObject.SetActive(false);
+                name = inputText;
+                inputField.text = "";
+                CreateHighscore(true);
+                }
+    }
+
+    public void SetTextScore() {
+        namePosition = 0;
+        name = "";
+        textScore.text = score.ToString();
+        playerScoreTitle.gameObject.SetActive(true);
+        textScore.gameObject.SetActive(true);
+    }
+
+    private void CreateHighscoreEntryTransform(HighscoreEntry highscoreEntry, Transform container, int score) {
+        
+        float templateHeight = 31f;
+        Transform entryTransform = Instantiate(entryTemplate, container);
+        RectTransform entryRectTransform = entryTransform.GetComponent<RectTransform>();
+        entryRectTransform.anchoredPosition = new Vector2(0, -templateHeight * this.highscoreEntryTransformList.Count);
+        entryTransform.gameObject.SetActive(true);
+
+        int rank = this.highscoreEntryTransformList.Count + 1;
+        string rankString;
+        switch (rank) {
+        default:
+            rankString = rank + "TH"; break;
+
+        case 1: rankString = "1ST"; break;
+        case 2: rankString = "2ND"; break;
+        case 3: rankString = "3RD"; break;
+        }
+
+        entryTransform.Find("posText").GetComponent<TextMeshProUGUI>().text = rankString;
+
+        int local_score = highscoreEntry.score;
+
+        entryTransform.Find("scoreText").GetComponent<TextMeshProUGUI>().text = local_score.ToString();
+
+        string local_name = highscoreEntry.name;
+        entryTransform.Find("nameText").GetComponent<TextMeshProUGUI>().text = local_name;
+            
+        if (local_score == score && string.IsNullOrWhiteSpace(local_name)){
+            namePosition = rank;
+        } 
+
+        // Set background visible odds and evens, easier to read
+        entryTransform.Find("background").gameObject.SetActive(rank % 2 == 1);
+        
+        // Highlight First
+        if (rank == 1) {
+            entryTransform.Find("posText").GetComponent<TextMeshProUGUI>().color = Color.green;
+            entryTransform.Find("scoreText").GetComponent<TextMeshProUGUI>().color = Color.green;
+            entryTransform.Find("nameText").GetComponent<TextMeshProUGUI>().color = Color.green;
+        }
+
+        // Set trophy
+        switch (rank) {
+        default:
+            entryTransform.Find("trophy").gameObject.SetActive(false);
+            break;
+        case 1:
+            entryTransform.Find("trophy").GetComponent<Image>().color = HexToColor("#FFD200");
+            break;
+        case 2:
+            entryTransform.Find("trophy").GetComponent<Image>().color = HexToColor("#C6C6C6");
+            break;
+        case 3:
+            entryTransform.Find("trophy").GetComponent<Image>().color = HexToColor("#B76F56");
+            break;
+
+        }
+
+        this.highscoreEntryTransformList.Add(entryTransform);
+    }
+
+    private Color HexToColor(string hex)
+        {
+            Color color = Color.white;
+            ColorUtility.TryParseHtmlString(hex, out color);
+            return color;
+        }
+    private void AddHighscoreEntry(int score, string name) {
+        // Create HighscoreEntry
+        HighscoreEntry highscoreEntry = new HighscoreEntry { score = score, name = name };
+
+        // Add new entry to Highscores
+        this.highscores.highscoreEntryList.Add(highscoreEntry);
+    }
+
+    public void setOriginalHighscore(){
+        PlayerPrefs.DeleteAll();
+    }
+
+    public class Highscores {
+        public List<HighscoreEntry> highscoreEntryList;
+    }
+
+    /*
+     * Represents a single High score entry
+     * */
+    [System.Serializable] 
+    public class HighscoreEntry {
+        public int score;
+        public string name;
+    }
+
+}
+```
 It is a C# script using different variables to achieve the following general logic:
 
 The main function is the 'CreateHighscore' function.
@@ -696,5 +946,11 @@ Not all scripts in the app are detailed in the readme, such as additional collis
 
 # Installation Note
 
+**Update:**  
+- Target SDK 36.
+- Speed improvements on level 5.
+- Code updated to Unity 6.1
+
+Old:  
 Just open the `atomremix_unity` folder as a project from Unity Hub.  
 Unity Version: 2022.3.16f1
